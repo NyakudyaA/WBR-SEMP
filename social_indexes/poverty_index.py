@@ -59,21 +59,22 @@ def main():
         sys.exit(1)
 
     cursor = connection.cursor()
-    dependency_ratio = ''' CREATE MATERIALIZED VIEW public.mv_dependency_ratio
+    dependency_ratio = ''' 
+    CREATE MATERIALIZED VIEW public.mv_dependency_ratio
  AS
  WITH limpopo_subplace AS (
          SELECT a_1.*,
             b_1.geom
            FROM "employment-status-hhold-head" a_1
              JOIN sub_place b_1 ON a_1.sp_code = b_1.sp_code
-          WHERE a_1.pr_name::text = 'Limpopo'::text
+
         )
- SELECT a.id, a.sal_code, a.sp_code, a.sp_name, a.mp_code, a.mp_name,
-a.mn_mdb_c, a.mn_code, a.mn_name, a.dc_mdb_c, a.dc_code, a.dc_name, a.pr_code, a.pr_name, a.employed,
+ SELECT a.id,a.sp_code,a.sp_name, a.employed,
 a.unemployed, a.dosicoraged_worker_seeker, a.not_economically_active, a.less_than_15,
-    st_transform(st_intersection(a.geom,b.geom),32735) AS geom
+    st_intersection(st_transform(a.geom,32735),st_transform(b.geom,32735)) AS geom
    FROM limpopo_subplace a
-     JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);'''
+     JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);
+     '''
     cursor.execute(dependency_ratio)
     connection.commit()
     dependency_ratio_index = ''' 
@@ -86,49 +87,53 @@ round((100 - ((sum(unemployed::decimal + dosicoraged_worker_seeker::decimal
 
 end AS "index",geom
 FROM public.mv_dependency_ratio
-group by (id,sp_code,sp_name,geom,employed,unemployed,dosicoraged_worker_seeker,not_economically_active,less_than_15) ;'''
+group by (id,sp_code,sp_name,employed,geom) ;
+    '''
     cursor.execute(dependency_ratio_index)
     connection.commit()
 
     proportion_of_low_income_households = ''' 
-        CREATE MATERIALIZED VIEW public.mv_proportion_of_low_income_households
+       CREATE MATERIALIZED VIEW public.mv_proportion_of_low_income_households
  AS
  WITH limpopo_subplace AS (
          SELECT a_1.*,
             b_1.geom
            FROM "annual-household-income" a_1
              JOIN sub_place b_1 ON a_1.sp_code = b_1.sp_code
-          WHERE a_1.pr_name::text = 'Limpopo'::text
+
         )
- SELECT a.id,  a.sal_code, a.sp_code, a.sp_name, a.mp_code, a.mp_name,
-a.mn_mdb_c, a.mn_code, a.mn_name, a.dc_mdb_c, a.dc_code, a.dc_name, a.pr_code,
-a.pr_name, a.no_income, a."1-4800k", a."4801-9600", a."9601-19600", a."19601-38200",
+ SELECT a.id,a.sp_code,a.sp_name, a.no_income, a."1-4800k", a."4801-9600", a."9601-19600", a."19601-38200",
 a."38201-76400", a."76401-153800", a."153801-307600", a."307601-614400",
 a."614001-1228800", a."1228801-2457600", a."greater than 24576001", a.unspecified,
-    st_transform(st_intersection(a.geom,b.geom),32735) AS geom
+    st_intersection(st_transform(a.geom,32735),st_transform(b.geom,32735)) AS geom
    FROM limpopo_subplace a
-     JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);'''
+     JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);
+     '''
     cursor.execute(proportion_of_low_income_households)
     connection.commit()
-    proportion_of_low_income_households_index = ''' CREATE MATERIALIZED VIEW public.mv_proportion_of_low_income_households_index AS
+    proportion_of_low_income_households_index = ''' 
+    CREATE MATERIALIZED VIEW public.mv_proportion_of_low_income_households_index AS
 WITH sample AS (
-SELECT a.id, a.sp_code, sum(a.no_income + a."1-4800k" + a."4801-9600") / st_area(a.geom) * 1000000::decimal
+SELECT a.id,a.sp_code,a.sp_name, sum(a.no_income + a."1-4800k" + a."4801-9600") / st_area(a.geom) * 1000000::decimal
     as income_density, geom
 FROM public.mv_proportion_of_low_income_households as a
-group by (a.id, a.sp_code,geom))
+group by (a.id, a.sp_code,a.sp_name,geom)
+    )
     SELECT sample.id,
+    sample.sp_name,
     sample.sp_code,
 
-        CASE WHEN
-        (sample.income_density / (( SELECT percentile_cont(0.9::decimal)
-                WITHIN GROUP (ORDER BY sample_1.income_density) AS percentile_cont
+CASE WHEN
+    (sample.income_density / (( SELECT percentile_cont(0.9::decimal)
+    WITHIN GROUP (ORDER BY sample_1.income_density) AS percentile_cont
                FROM sample sample_1))) > 10 THEN 10
-        ELSE
-        (sample.income_density / (( SELECT percentile_cont(0.9::decimal)
-                WITHIN GROUP (ORDER BY sample_1.income_density) AS percentile_cont
+    ELSE
+    (sample.income_density / (( SELECT percentile_cont(0.9::decimal)
+    WITHIN GROUP (ORDER BY sample_1.income_density) AS percentile_cont
                FROM sample sample_1)))
     END AS "index" ,sample.geom
-   FROM sample;'''
+   FROM sample;
+   '''
     cursor.execute(proportion_of_low_income_households_index)
     connection.commit()
 
