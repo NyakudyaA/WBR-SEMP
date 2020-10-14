@@ -9,21 +9,18 @@ CREATE MATERIALIZED VIEW public.mv_use_of_wood_for_cooking
             b_1.geom
            FROM "energy-for-cooking" a_1
              JOIN sub_place b_1 ON a_1.sp_code = b_1.sp_code
-          WHERE a_1.pr_name::text = 'Limpopo'::text
+
         )
- SELECT a.id,a.sal_code,a.sp_code,a.sp_name,a.mp_code,a.mp_name,a.mn_mdb_c,a.mn_code,
-    a.mn_name,a.dc_mdb_c,a.dc_code,a.dc_name,a.pr_code,a.pr_name,a.electricity,
+ SELECT a.id,a.sp_code,a.sp_name,a.electricity,
     a.gas,a.paraffin,a.wood,a.coal,a.animal_dung,a.solar,a.other,a.nothing,a.unspecified,a.not_applicable,
-    st_transform(st_intersection(a.geom,b.geom),32735) AS geom
+    st_intersection(st_transform(a.geom,32735),st_transform(b.geom,32735)) AS geom
    FROM limpopo_subplace a
      JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);
 
 -- Create a layer with statistics for the wood_for_cooking index
 CREATE MATERIALIZED VIEW public.mv_use_of_wood_for_cooking_index AS
  WITH sample AS (
-         SELECT a.id,a.sal_code,a.sp_code,a.sp_name,a.mp_code,
-            a.mp_name,a.mn_mdb_c,a.mn_code,a.mn_name,a.dc_mdb_c,a.dc_code,a.dc_name,a.pr_code,
-            a.pr_name,a.electricity,a.gas,a.paraffin,a.wood,a.coal,a.animal_dung,
+         SELECT a.id,a.sp_code,a.sp_name,a.electricity,a.gas,a.paraffin,a.wood,a.coal,a.animal_dung,
             a.solar,a.other,a.nothing,a.unspecified,a.not_applicable,
             a.wood::double precision / st_area(a.geom) * 1000000::double precision AS wood_density,
             a.geom
@@ -55,20 +52,18 @@ CREATE MATERIALIZED VIEW public.mv_use_of_wood_for_heating
             b_1.geom
            FROM "energy-for-heating" a_1
              JOIN sub_place b_1 ON a_1.sp_code = b_1.sp_code
-          WHERE a_1.pr_name::text = 'Limpopo'::text
+
         )
- SELECT a.id, a.sal_code, a.sp_code, a.sp_name, a.mp_code, a.mp_name, a.mn_mdb_c, a.mn_code,
-        a.mn_name, a.dc_mdb_c, a.dc_code, a.dc_name, a.pr_code, a.pr_name, a.electricity, a.gas,
+ SELECT a.id,a.sp_code,a.sp_name, a.electricity, a.gas,
 		a.paraffin, a.wood, a.coal, a.animal_dung, a.solar, a.other, a.nothing, a.unspecified, a.not_applicable,
-		st_transform(st_intersection(a.geom,b.geom),32735) AS geom
+		st_intersection(st_transform(a.geom,32735),st_transform(b.geom,32735)) AS geom
 		FROM limpopo_subplace a
      	JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);
 
 -- Create a layer with statistics for the wood_for_heating index
 CREATE MATERIALIZED VIEW public.mv_use_of_wood_for_heating_index AS
  WITH sample AS (
-         SELECT a.id, a.sal_code, a.sp_code, a.sp_name, a.mp_code, a.mp_name, a.mn_mdb_c, a.mn_code, a.mn_name, a.dc_mdb_c, a.dc_code,
-			a.dc_name, a.pr_code, a.pr_name, a.electricity, a.gas, a.paraffin,
+         SELECT a.id,a.sp_code,a.sp_name, a.electricity, a.gas, a.paraffin,
 			a.wood::double precision / st_area(a.geom) * 1000000::double precision AS wood_density, a.coal, a.animal_dung, a.solar, a.other,
 			a.nothing, a.unspecified, a.not_applicable, a.geom
 		FROM public.mv_use_of_wood_for_heating as a
@@ -99,22 +94,20 @@ CREATE MATERIALIZED VIEW public.mv_supply_of_building_materials
             b_1.geom
            FROM "type-of-main-dwelling" a_1
              JOIN sub_place b_1 ON a_1.sp_code = b_1.sp_code
-          WHERE a_1.pr_name::text = 'Limpopo'::text
+
         )
- SELECT a.id, a.sal_code, a.sp_code, a.sp_name, a.mp_code, a.mp_name, a.mn_mdb_c,
-        a.mn_code, a.mn_name, a.dc_mdb_c, a.dc_code, a.dc_name, a.pr_code, a.pr_name, a.brick_concrete,
+ SELECT a.id,a.sp_code,a.sp_name, a.brick_concrete,
         a.traditional_dwelling, a.flat_apartment, a.cluster_house, a.townhouse, a.semi_detached_house,
         a.house_flat_room_in_backyard, a.informal_dwelling, a.informal_dwelling_shack, a.room_flatlet, a.caravan_tent,
         a.other, a.unspecified, a.not_applicable,
-		st_transform(st_intersection(a.geom,b.geom),32735) AS geom
+		st_intersection(st_transform(a.geom,32735),st_transform(b.geom,32735)) AS geom
 		FROM limpopo_subplace a
      	JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);
 
 -- Create a layer with statistics for the supply of building materials index
 CREATE MATERIALIZED VIEW public.mv_supply_of_building_materials_index AS
  WITH sample AS (
-         SELECT a.id, a.sal_code, a.sp_code, a.sp_name, a.mp_code, a.mp_name, a.mn_mdb_c, a.mn_code, a.mn_name,
-a.dc_mdb_c, a.dc_code, a.dc_name, a.pr_code, a.pr_name, a.brick_concrete,
+         SELECT a.id,a.sp_code,a.sp_name, a.brick_concrete,
 a.traditional_dwelling::double precision / st_area(a.geom) * 1000000::double precision AS dwelling_density,
 a.flat_apartment, a.cluster_house, a.townhouse, a.semi_detached_house, a.house_flat_room_in_backyard,
 a.informal_dwelling, a.informal_dwelling_shack, a.room_flatlet, a.caravan_tent, a.other, a.unspecified,
@@ -146,13 +139,11 @@ CREATE MATERIALIZED VIEW public.mv_direct_supply_of_water_from_the_environment
             b_1.geom
            FROM "source-of-water" a_1
              JOIN sub_place b_1 ON a_1.sp_code = b_1.sp_code
-          WHERE a_1.pr_name::text = 'Limpopo'::text
+
         )
- SELECT  a.id, a.sal_code, a.sp_code, a.sp_name, a.mp_code, a.mp_name,
-        a.mn_mdb_c, a.mn_code, a.mn_name, a.dc_mdb_c, a.dc_code, a.dc_name, a.pr_code,
-        a.pr_name, a.regional_local_water_source, a.borehole, a.spring, a.rain_water,
+ SELECT  a.id,a.sp_code,a.sp_name, a.regional_local_water_source, a.borehole, a.spring, a.rain_water,
         a.dam_pool_stagnant_water, a.river_stream, a.water_vendor, a.water_tanker, a.other, a.not_applicable,
-		st_transform(st_intersection(a.geom,b.geom),32735) AS geom
+		st_intersection(st_transform(a.geom,32735),st_transform(b.geom,32735)) AS geom
 		FROM limpopo_subplace a
      	JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);
 
@@ -190,12 +181,11 @@ CREATE MATERIALIZED VIEW public.mv_dependency_ratio
             b_1.geom
            FROM "employment-status-hhold-head" a_1
              JOIN sub_place b_1 ON a_1.sp_code = b_1.sp_code
-          WHERE a_1.pr_name::text = 'Limpopo'::text
+
         )
- SELECT a.id, a.sal_code, a.sp_code, a.sp_name, a.mp_code, a.mp_name,
-a.mn_mdb_c, a.mn_code, a.mn_name, a.dc_mdb_c, a.dc_code, a.dc_name, a.pr_code, a.pr_name, a.employed,
+ SELECT a.id,a.sp_code,a.sp_name, a.employed,
 a.unemployed, a.dosicoraged_worker_seeker, a.not_economically_active, a.less_than_15,
-    st_transform(st_intersection(a.geom,b.geom),32735) AS geom
+    st_intersection(st_transform(a.geom,32735),st_transform(b.geom,32735)) AS geom
    FROM limpopo_subplace a
      JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);
 
@@ -210,7 +200,7 @@ round((100 - ((sum(unemployed::decimal + dosicoraged_worker_seeker::decimal
 
 end AS "index",geom
 FROM public.mv_dependency_ratio
-group by (id,sp_code,sp_name,geom,employed,unemployed,dosicoraged_worker_seeker,not_economically_active,less_than_15) ;
+group by (id,sp_code,sp_name,employed,geom) ;
 
 -- Create a materialized view proportion of low-income households .
 -- This is a join between the table "annual-household-income", sub_place
@@ -222,27 +212,26 @@ CREATE MATERIALIZED VIEW public.mv_proportion_of_low_income_households
             b_1.geom
            FROM "annual-household-income" a_1
              JOIN sub_place b_1 ON a_1.sp_code = b_1.sp_code
-          WHERE a_1.pr_name::text = 'Limpopo'::text
+
         )
- SELECT a.id,  a.sal_code, a.sp_code, a.sp_name, a.mp_code, a.mp_name,
-a.mn_mdb_c, a.mn_code, a.mn_name, a.dc_mdb_c, a.dc_code, a.dc_name, a.pr_code,
-a.pr_name, a.no_income, a."1-4800k", a."4801-9600", a."9601-19600", a."19601-38200",
+ SELECT a.id,a.sp_code,a.sp_name, a.no_income, a."1-4800k", a."4801-9600", a."9601-19600", a."19601-38200",
 a."38201-76400", a."76401-153800", a."153801-307600", a."307601-614400",
 a."614001-1228800", a."1228801-2457600", a."greater than 24576001", a.unspecified,
-    st_transform(st_intersection(a.geom,b.geom),32735) AS geom
+    st_intersection(st_transform(a.geom,32735),st_transform(b.geom,32735)) AS geom
    FROM limpopo_subplace a
      JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);
 
 -- Create a layer with statistics for dependency ratio index
 
-CREATE MATERIALIZED VIEW public.proportion_of_low_income_households_index AS
+CREATE MATERIALIZED VIEW public.mv_proportion_of_low_income_households_index AS
 WITH sample AS (
-SELECT a.id, a.sp_code, sum(a.no_income + a."1-4800k" + a."4801-9600") / st_area(a.geom) * 1000000::decimal
+SELECT a.id,a.sp_code,a.sp_name, sum(a.no_income + a."1-4800k" + a."4801-9600") / st_area(a.geom) * 1000000::decimal
 	as income_density, geom
 FROM public.mv_proportion_of_low_income_households as a
-group by (a.id, a.sp_code,geom)
+group by (a.id, a.sp_code,a.sp_name,geom)
 	)
 	SELECT sample.id,
+	       sample.sp_name,
     sample.sp_code,
 
 			   CASE WHEN
@@ -258,3 +247,69 @@ group by (a.id, a.sp_code,geom)
 
 
    FROM sample;
+
+-- Access to services sub indices
+
+-- Create a materialized view access_to_services_electricity .
+-- This is a join between the table "energy-for-lighting", sub_place
+-- and wbr aoi
+CREATE MATERIALIZED VIEW public.mv_access_to_services_electricity
+ AS
+ WITH limpopo_subplace AS (
+         SELECT a_1.*,
+            b_1.geom
+           FROM "energy-for-lighting" a_1
+             JOIN sub_place b_1 ON a_1.sp_code = b_1.sp_code
+
+        )
+ SELECT a.id, a.sp_code, a.sp_name,
+a.electricity, a.gas, a.paraffin, a.candles, a.solar, a.nothing, a.unspecified, a.not_applicable,
+    st_intersection(st_transform(a.geom,32735),st_transform(b.geom,32735)) AS geom
+   FROM limpopo_subplace a
+     JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);
+
+--TODO
+-- Add mv_access_to_services_electricity_index below here
+
+-- Create a materialized view access_to_services_electricity .
+-- This is a join between the table "toilet-facilities", sub_place
+-- and wbr aoi
+CREATE MATERIALIZED VIEW public.mv_access_to_services_sanitation
+ AS
+ WITH limpopo_subplace AS (
+         SELECT a_1.*,
+            b_1.geom
+           FROM "toilet-facilities" a_1
+             JOIN sub_place b_1 ON a_1.sp_code = b_1.sp_code
+
+        )
+ SELECT a.id, a.sp_code, a.sp_name,
+a.nothing, a.flush_toilet_connected_to_sewer, a.flush_with_septic_tank, a.chemical_toilet, a.pit_toilet_with_ventilation,
+a.pit_toilet_without_ventilation, a.bucket_toilet, a.other, a.unspecified, a.not_applicable,
+    st_intersection(st_transform(a.geom,32735),st_transform(b.geom,32735)) AS geom
+   FROM limpopo_subplace a
+     JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);
+
+--TODO
+-- Add mv_access_to_services_sanitation_index below here
+
+-- Create a materialized view access_to_services_refuse_disposal .
+-- This is a join between the table "refuse-disposal", sub_place
+-- and wbr aoi
+CREATE MATERIALIZED VIEW public.mv_access_to_services_refuse_disposal
+ AS
+ WITH limpopo_subplace AS (
+         SELECT a_1.*,
+            b_1.geom
+           FROM "refuse-disposal" a_1
+             JOIN sub_place b_1 ON a_1.sp_code = b_1.sp_code
+
+        )
+ SELECT a.id,   a.sp_code, a.sp_name,   a.removed_local_auth_1_per_week, a.removed_local_auth_less_often,
+a.communal_refuse_dump, a.own_refuse_dump, a.no_refuse_dump, a.other, a.unspecified, a.not_applicable,
+    st_intersection(st_transform(a.geom,32735),st_transform(b.geom,32735)) AS geom
+   FROM limpopo_subplace a
+     JOIN aoi_wbr b ON st_intersects(b.geom, a.geom);
+
+--TODO
+-- Add mv_access_to_services_refuse_disposal_index below here
